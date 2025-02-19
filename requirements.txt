@@ -1,0 +1,2 @@
+inquirer~=3.4.0
+requests-cache~=1.2.1
