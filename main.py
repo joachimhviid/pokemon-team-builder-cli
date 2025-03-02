@@ -1,5 +1,6 @@
 from inquirer import Text, prompt, List, Checkbox
 import requests_cache
+import json
 
 BASE_URL = "https://pokeapi.co/api/v2"
 
@@ -81,7 +82,38 @@ def select_ability(pokemon):
         List(name="ability", message=f"Select an ability for {pokemon['name']}", choices=abilities)
     ]
     answers = prompt(questions)
-    return answers["ability"]
+    return get_ability_info(answers['ability'])
+
+
+def get_ability_info(ability):
+    ability_response = requests_cache.CachedSession().get(ability['url'])
+
+    if ability_response.status_code != 200:
+        return None
+    ability_info = ability_response.json()
+
+    effect_entries = [
+        entry for entry in ability_info['effect_entries']
+        if entry['language']['name'] == 'en'
+    ]
+
+    effect_changes = [
+        {
+            "effect_entries": [
+                entry for entry in change['effect_entries']
+                if entry['language']['name'] == 'en'
+            ],
+            "version_group": change['version_group']
+        }
+        for change in ability_info['effect_changes']
+    ]
+
+    return {
+        "id": ability_info['id'],
+        "name": ability_info['name'],
+        "effect_entries": effect_entries,
+        "effect_changes": effect_changes,
+    }
 
 
 def select_held_item():
