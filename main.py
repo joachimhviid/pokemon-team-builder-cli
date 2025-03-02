@@ -29,7 +29,7 @@ def main():
             else:
                 print(f"Invalid Pokemon name/ID: {pokemon_answer[f'pokemon_{i + 1}']}. Please try again.")
 
-    print(f"Your team: {team}")
+    save_team(team)
 
 
 def get_pokemon(pokemon_id):
@@ -118,6 +118,15 @@ def get_ability_info(ability):
 
 def select_held_item():
     pass
+
+
+def save_team(team):
+    questions = [
+        Text(name='name', message='Please name your team.')
+    ]
+    answers = prompt(questions)
+    with open(f'out/{answers["name"]}.json', 'w') as f:
+            json.dump(team, f, indent=2)
 
 
 if __name__ == '__main__':
