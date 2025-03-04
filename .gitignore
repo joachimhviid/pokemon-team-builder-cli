@@ -1,2 +1,3 @@
 http_cache.sqlite
 out/*.json
+.DS_Store

@@ -22,11 +22,21 @@ def main():
             ]
             pokemon_answer = prompt(questions)
             pokemon = get_pokemon(pokemon_answer[f"pokemon_{i + 1}"])
+            print(f'Selected {pokemon['name']}')
             if pokemon:
-                ability = select_ability(pokemon)
-                moves = select_moves(pokemon)
-                team.append({"id": pokemon['id'], "name": pokemon["name"], "types": format_types(pokemon), "stats": format_stats(
-                    pokemon), "evs": set_evs(), "ivs": set_ivs(), "moves": moves, "ability": ability})
+                team.append({
+                    "id": pokemon['id'],
+                    "name": pokemon["name"],
+                    "types": format_types(pokemon),
+                    "stats": format_stats(pokemon),
+                    "nature": select_nature(),
+                    "evs": set_evs(),
+                    "ivs": set_ivs(),
+                    "level": set_level(),
+                    "moves": select_moves(pokemon),
+                    "ability": select_ability(pokemon),
+                    "held_item": None
+                })
                 break
             else:
                 print(
@@ -191,6 +201,53 @@ def set_evs():
                 break
 
     return evs
+
+
+pokemon_natures = {
+    'hardy': {},
+    'lonely': {'UP': 'attack', 'DOWN': 'defense'},
+    'brave': {'UP': 'attack', 'DOWN': 'speed'},
+    'adamant': {'UP': 'attack', 'DOWN': 'special-attack'},
+    'naughty': {'UP': 'attack', 'DOWN': 'special-defense'},
+    'bold': {'UP': 'defense', 'DOWN': 'attack'},
+    'docile': {},
+    'relaxed': {'UP': 'defense', 'DOWN': 'speed'},
+    'impish': {'UP': 'defense', 'DOWN': 'special-attack'},
+    'lax': {'UP': 'defense', 'DOWN': 'special-defense'},
+    'timid': {'UP': 'speed', 'DOWN': 'attack'},
+    'hasty': {'UP': 'speed', 'DOWN': 'defense'},
+    'serious': {},
+    'jolly': {'UP': 'speed', 'DOWN': 'special-attack'},
+    'naive': {'UP': 'speed', 'DOWN': 'special-defense'},
+    'modest': {'UP': 'special-attack', 'DOWN': 'attack'},
+    'mild': {'UP': 'special-attack', 'DOWN': 'defense'},
+    'quiet': {'UP': 'special-attack', 'DOWN': 'speed'},
+    'bashful': {},
+    'rash': {'UP': 'special-attack', 'DOWN': 'special-defense'},
+    'calm': {'UP': 'special-defense', 'DOWN': 'attack'},
+    'gentle': {'UP': 'special-defense', 'DOWN': 'defense'},
+    'sassy': {'UP': 'special-defense', 'DOWN': 'speed'},
+    'careful': {'UP': 'special-defense', 'DOWN': 'special-attack'},
+    'quirky': {}
+}
+
+
+def set_level():
+    questions = [
+        Text(name='level', message='Set the level for your Pokémon (1-100)',
+             validate=lambda _, x: x.isdigit() and 1 <= int(x) <= 100)
+    ]
+    answers = prompt(questions)
+    return int(answers['level'])
+
+
+def select_nature():
+    natures = list(pokemon_natures.keys())
+    questions = [
+        List(name="nature", message="Select a nature for your Pokémon", choices=natures)
+    ]
+    answers = prompt(questions)
+    return answers['nature']
 
 
 def save_team(team):
