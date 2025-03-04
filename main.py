@@ -17,30 +17,42 @@ def main():
     for i in range(team_size):
         while True:
             questions = [
-                Text(name=f"pokemon_{i + 1}", message=f"Which Pokemon do you want for slot {i + 1} (ID/name)?"),
+                Text(
+                    name=f"pokemon_{i + 1}", message=f"Which Pokemon do you want for slot {i + 1} (ID/name)?"),
             ]
             pokemon_answer = prompt(questions)
             pokemon = get_pokemon(pokemon_answer[f"pokemon_{i + 1}"])
             if pokemon:
                 ability = select_ability(pokemon)
                 moves = select_moves(pokemon)
-                team.append({"name": pokemon["name"], "moves": moves, "ability": ability})
+                team.append({"id": pokemon['id'], "name": pokemon["name"], "types": format_types(pokemon), "stats": format_stats(
+                    pokemon), "evs": set_evs(), "ivs": set_ivs(), "moves": moves, "ability": ability})
                 break
             else:
-                print(f"Invalid Pokemon name/ID: {pokemon_answer[f'pokemon_{i + 1}']}. Please try again.")
+                print(
+                    f"Invalid Pokemon name/ID: {pokemon_answer[f'pokemon_{i + 1}']}. Please try again.")
 
     save_team(team)
 
 
 def get_pokemon(pokemon_id):
     print(f"Query with {pokemon_id}")
-    response = requests_cache.CachedSession().get(f"{BASE_URL}/pokemon/{pokemon_id}")
+    response = requests_cache.CachedSession().get(
+        f"{BASE_URL}/pokemon/{pokemon_id}")
     print(response.status_code)
 
     if response.status_code != 200:
         return None
 
     return response.json()
+
+
+def format_stats(pokemon):
+    return {stat['stat']['name']: stat['base_stat'] for stat in pokemon['stats']}
+
+
+def format_types(pokemon):
+    return [t['type']['name'] for t in pokemon['types']]
 
 
 def select_moves(pokemon):
@@ -77,9 +89,11 @@ def get_move_info(move):
 
 
 def select_ability(pokemon):
-    abilities = [(ability["ability"]["name"], ability["ability"]) for ability in pokemon["abilities"]]
+    abilities = [(ability["ability"]["name"], ability["ability"])
+                 for ability in pokemon["abilities"]]
     questions = [
-        List(name="ability", message=f"Select an ability for {pokemon['name']}", choices=abilities)
+        List(name="ability",
+             message=f"Select an ability for {pokemon['name']}", choices=abilities)
     ]
     answers = prompt(questions)
     return get_ability_info(answers['ability'])
@@ -120,13 +134,72 @@ def select_held_item():
     pass
 
 
+def set_ivs():
+    MAX_IV = 31
+    ivs = {
+        'hp': 0,
+        'attack': 0,
+        'defense': 0,
+        'special-attack': 0,
+        'special-defense': 0,
+        'speed': 0
+    }
+
+    for stat in ivs.keys():
+        questions = [
+            Text(name='iv', message=f'How many IV points do you want to invest in {stat}? (0-{MAX_IV})', validate=lambda _, x: x.isdigit(
+            ) and 0 <= int(x) <= MAX_IV)
+        ]
+        answers = prompt(questions)
+        ivs[stat] = int(answers['iv'])
+
+    return ivs
+
+
+def set_evs():
+    MAX_EVS = 508  # Actual maximum is 510 but due to EVs incrementing a stat every 4 points the effective max is 508
+    MAX_STAT_EV = 252
+    invested_evs = 0
+    evs = {
+        'hp': 0,
+        'attack': 0,
+        'defense': 0,
+        'special-attack': 0,
+        'special-defense': 0,
+        'speed': 0
+    }
+
+    while invested_evs < MAX_EVS:
+        for stat in evs.keys():
+            remaining_evs = MAX_EVS - invested_evs
+            questions = [
+                Text(name='ev', message=f'How many EV points do you want to invest in {stat}? (0-{min(MAX_STAT_EV, remaining_evs)}) \nAvailable EVs remaining {remaining_evs}', validate=lambda _, x: x.isdigit(
+                ) and 0 <= int(x) <= min(MAX_STAT_EV, remaining_evs))
+            ]
+            answers = prompt(questions)
+            ev = int(answers['ev'])
+
+            if invested_evs + ev > MAX_EVS:
+                print(
+                    f"Total EVs cannot exceed {MAX_EVS}. You have {remaining_evs} EVs remaining.")
+                continue
+
+            evs[stat] += ev
+            invested_evs += ev
+
+            if invested_evs >= MAX_EVS:
+                break
+
+    return evs
+
+
 def save_team(team):
     questions = [
         Text(name='name', message='Please name your team.')
     ]
     answers = prompt(questions)
     with open(f'out/{answers["name"]}.json', 'w') as f:
-            json.dump(team, f, indent=2)
+        json.dump(team, f, indent=2)
 
 
 if __name__ == '__main__':
