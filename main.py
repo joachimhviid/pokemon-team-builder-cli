@@ -1,6 +1,7 @@
 from inquirer import Text, prompt, List, Checkbox
 import requests_cache
 import json
+from enum_items import Item
 
 BASE_URL = "https://pokeapi.co/api/v2"
 
@@ -35,7 +36,7 @@ def main():
                     "level": set_level(),
                     "moves": select_moves(pokemon),
                     "ability": select_ability(pokemon),
-                    "held_item": None
+                    "held_item": select_held_item(),
                 })
                 break
             else:
@@ -141,7 +142,17 @@ def get_ability_info(ability):
 
 
 def select_held_item():
-    pass
+    item_array = []
+    for i in Item:
+        item_array.append(i.name)
+        print(i.name)
+    
+    questions = [
+        List(name="held_item", message="Select an Item for your Pokémon to hold", choices=item_array)
+    ]
+    answers = prompt(questions)
+    return answers['held_item']
+
 
 
 def set_ivs():
